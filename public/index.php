@@ -240,7 +240,6 @@ $app->patch('/categories/{id}', function (Request $request, Response $response, 
     return $response->withHeader('Content-Type', 'application/json');
 });
 
-
 //get stats
 $app->get('/stats', function (Request $request, Response $response, $args) {
     $sql = "SELECT sum(weight) as sum_weight, c.name as category_name, c.id as cateogry_id
