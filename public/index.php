@@ -26,13 +26,9 @@ $app->post('/db', function (Request $request, Response $response, $args) {
     //create db
     $result = "";
     $pdo = (new SQLiteConnection())->connect(DBFILE);
-    if ($pdo != null) {
-        $result = 'Connected to the SQLite database successfully!';
-    } else {
-        $result = 'Whoops, could not connect to the SQLite database!';
-    }
     $create_tables_sql = file_get_contents("sql/create_tables.sql");
     $pdo->exec($create_tables_sql);
+    $result = true;
     
     //output
     $payload = json_encode(['result' => $result], JSON_PRETTY_PRINT);
@@ -43,11 +39,12 @@ $app->post('/db', function (Request $request, Response $response, $args) {
 //delete db
 $app->delete('/db', function (Request $request, Response $response, $args) {
     //delete db
-    $result = true;
+    $result = "";
     
     if (file_exists(DBFILE)) {
         unlink(DBFILE);
     }
+    $result = true;
     
     //output
     $payload = json_encode(['result' => $result], JSON_PRETTY_PRINT);
@@ -60,13 +57,10 @@ $app->post('/dbseed', function (Request $request, Response $response, $args) {
     //connect db
     $result = "";
     $pdo = (new SQLiteConnection())->connect(DBFILE);
-    if ($pdo != null) {
-        $result = 'Connected to the SQLite database successfully!';
-    } else {
-        $result = 'Whoops, could not connect to the SQLite database!';
-    }
+
     $sql = file_get_contents("sql/insert_seed_data.sql");
     $pdo->exec($sql);
+    $result = true;
     
     //output
     $payload = json_encode(['result' => $result], JSON_PRETTY_PRINT);
@@ -76,7 +70,6 @@ $app->post('/dbseed', function (Request $request, Response $response, $args) {
 
 //get items
 $app->get('/items[/[{id}]]', function (Request $request, Response $response, $args) {
-    $result = "";
     $params = array();
     if (isset($args['id'])) {
         $id = $args['id'];
@@ -97,7 +90,6 @@ $app->get('/items[/[{id}]]', function (Request $request, Response $response, $ar
 
 //post items
 $app->post('/items', function (Request $request, Response $response, $args) {
-    $result = "";
     $params = array();
     $json = $request->getBody();
     $data = json_decode($json, true);
@@ -121,7 +113,6 @@ $app->post('/items', function (Request $request, Response $response, $args) {
 
 //patch items
 $app->patch('/items/{id}', function (Request $request, Response $response, $args) {
-    $result = "";
     $params = array();
     $json = $request->getBody();
     $data = json_decode($json, true);
@@ -150,7 +141,6 @@ $app->patch('/items/{id}', function (Request $request, Response $response, $args
 
 //delete item
 $app->delete('/items/{id}', function (Request $request, Response $response, $args) {
-    $result = "";
     $params = array();
     $id = $args['id'];
     $params[":id"] = $id;
@@ -168,7 +158,6 @@ $app->delete('/items/{id}', function (Request $request, Response $response, $arg
 
 //get categories
 $app->get('/categories[/[{id}]]', function (Request $request, Response $response, $args) {
-    $result = "";
     $params = array();
     if (isset($args['id'])) {
         $id = $args['id'];
@@ -189,7 +178,6 @@ $app->get('/categories[/[{id}]]', function (Request $request, Response $response
 
 //delete category
 $app->delete('/categories/{id}', function (Request $request, Response $response, $args) {
-    $result = "";
     $params = array();
     $id = $args['id'];
     $params[":id"] = $id;
@@ -206,7 +194,6 @@ $app->delete('/categories/{id}', function (Request $request, Response $response,
 
 //post category
 $app->post('/categories', function (Request $request, Response $response, $args) {
-    $result = "";
     $params = array();
     $json = $request->getBody();
     $data = json_decode($json, true);
@@ -230,7 +217,6 @@ $app->post('/categories', function (Request $request, Response $response, $args)
 
 //patch categories
 $app->patch('/categories/{id}', function (Request $request, Response $response, $args) {
-    $result = "";
     $params = array();
     $json = $request->getBody();
     $data = json_decode($json, true);
