@@ -1,0 +1,7 @@
+PATCH http://localhost:8080/categories/16 HTTP/1.1
+content-type: application/json
+
+{
+    "name": "name14 UpDaTeD",
+    "priority": "2"
+}

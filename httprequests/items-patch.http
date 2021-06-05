@@ -1,0 +1,8 @@
+PATCH http://localhost:8080/items/14 HTTP/1.1
+content-type: application/json
+
+{
+    "description": "descr UPDATED",
+    "weight": "123", 
+    "category_id": "2"
+}
