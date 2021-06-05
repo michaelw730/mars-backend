@@ -155,7 +155,6 @@ $app->delete('/items/{id}', function (Request $request, Response $response, $arg
     return $response->withHeader('Content-Type', 'application/json');
 });
 
-
 //get categories
 $app->get('/categories[/[{id}]]', function (Request $request, Response $response, $args) {
     $params = array();
@@ -237,6 +236,24 @@ $app->patch('/categories/{id}', function (Request $request, Response $response, 
     $stmt->execute($params);
    
     $payload = json_encode(true);
+    $response->getBody()->write($payload);
+    return $response->withHeader('Content-Type', 'application/json');
+});
+
+
+//get stats
+$app->get('/stats', function (Request $request, Response $response, $args) {
+    $sql = "SELECT sum(weight) as sum_weight, c.name as category_name, c.id as cateogry_id
+    FROM item i
+    INNER JOIN category c ON i.category_id = c.id
+    GROUP BY category_id";
+    $params = array();
+    
+    $pdo = (new SQLiteConnection())->connect(DBFILE);
+    $stmt = $pdo->prepare($sql, array(PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY));
+    $stmt->execute($params);
+   
+    $payload = json_encode($stmt->fetchAll(\PDO::FETCH_ASSOC));
     $response->getBody()->write($payload);
     return $response->withHeader('Content-Type', 'application/json');
 });
