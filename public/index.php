@@ -85,7 +85,9 @@ $app->get('/items[/[{id}]]', function (Request $request, Response $response, $ar
    
     $payload = json_encode($stmt->fetchAll(\PDO::FETCH_ASSOC));
     $response->getBody()->write($payload);
-    return $response->withHeader('Content-Type', 'application/json');
+    return $response
+        ->withHeader('Access-Control-Allow-Origin', '*')
+        ->withHeader('Content-Type', 'application/json');
 });
 
 //post items
@@ -170,9 +172,15 @@ $app->get('/categories[/[{id}]]', function (Request $request, Response $response
     $stmt = $pdo->prepare($sql, array(PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY));
     $stmt->execute($params);
    
-    $payload = json_encode($stmt->fetchAll(\PDO::FETCH_ASSOC));
+    if (isset($args['id'])) {
+        $payload = json_encode($stmt->fetch(\PDO::FETCH_ASSOC));
+    } else {
+        $payload = json_encode($stmt->fetchAll(\PDO::FETCH_ASSOC));
+    }
     $response->getBody()->write($payload);
-    return $response->withHeader('Content-Type', 'application/json');
+    return $response
+        ->withHeader('Access-Control-Allow-Origin', '*')
+        ->withHeader('Content-Type', 'application/json');
 });
 
 //delete category
