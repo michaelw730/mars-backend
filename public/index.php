@@ -49,7 +49,9 @@ $app->delete('/db', function (Request $request, Response $response, $args) {
     //output
     $payload = json_encode(['result' => $result], JSON_PRETTY_PRINT);
     $response->getBody()->write($payload);
-    return $response->withHeader('Content-Type', 'application/json');
+    return $response
+        ->withHeader('Access-Control-Allow-Origin', '*')
+        ->withHeader('Content-Type', 'application/json');
 });
 
 //seed db
@@ -65,7 +67,9 @@ $app->post('/dbseed', function (Request $request, Response $response, $args) {
     //output
     $payload = json_encode(['result' => $result], JSON_PRETTY_PRINT);
     $response->getBody()->write($payload);
-    return $response->withHeader('Content-Type', 'application/json');
+    return $response
+        ->withHeader('Access-Control-Allow-Origin', '*')
+        ->withHeader('Content-Type', 'application/json');
 });
 
 //get items
@@ -110,7 +114,9 @@ $app->post('/items', function (Request $request, Response $response, $args) {
    
     $payload = json_encode($id);
     $response->getBody()->write($payload);
-    return $response->withHeader('Content-Type', 'application/json');
+    return $response
+        ->withHeader('Access-Control-Allow-Origin', '*')
+        ->withHeader('Content-Type', 'application/json');
 });
 
 //patch items
@@ -138,7 +144,9 @@ $app->patch('/items/{id}', function (Request $request, Response $response, $args
    
     $payload = json_encode(true);
     $response->getBody()->write($payload);
-    return $response->withHeader('Content-Type', 'application/json');
+    return $response
+        ->withHeader('Access-Control-Allow-Origin', '*')
+        ->withHeader('Content-Type', 'application/json');
 });
 
 //delete item
@@ -154,7 +162,9 @@ $app->delete('/items/{id}', function (Request $request, Response $response, $arg
    
     $payload = json_encode($stmt->fetchAll(\PDO::FETCH_ASSOC));
     $response->getBody()->write($payload);
-    return $response->withHeader('Content-Type', 'application/json');
+    return $response
+        ->withHeader('Access-Control-Allow-Origin', '*')
+        ->withHeader('Content-Type', 'application/json');
 });
 
 //get categories
@@ -196,7 +206,9 @@ $app->delete('/categories/{id}', function (Request $request, Response $response,
    
     $payload = json_encode($stmt->fetchAll(\PDO::FETCH_ASSOC));
     $response->getBody()->write($payload);
-    return $response->withHeader('Content-Type', 'application/json');
+    return $response
+        ->withHeader('Access-Control-Allow-Origin', '*')
+        ->withHeader('Content-Type', 'application/json');
 });
 
 //post category
@@ -219,7 +231,9 @@ $app->post('/categories', function (Request $request, Response $response, $args)
    
     $payload = json_encode($id);
     $response->getBody()->write($payload);
-    return $response->withHeader('Content-Type', 'application/json');
+    return $response
+        ->withHeader('Access-Control-Allow-Origin', '*')
+        ->withHeader('Content-Type', 'application/json');
 });
 
 //patch categories
@@ -245,7 +259,9 @@ $app->patch('/categories/{id}', function (Request $request, Response $response, 
    
     $payload = json_encode(true);
     $response->getBody()->write($payload);
-    return $response->withHeader('Content-Type', 'application/json');
+    return $response
+        ->withHeader('Access-Control-Allow-Origin', '*')
+        ->withHeader('Content-Type', 'application/json');
 });
 
 //get stats
@@ -262,7 +278,9 @@ $app->get('/stats', function (Request $request, Response $response, $args) {
    
     $payload = json_encode($stmt->fetchAll(\PDO::FETCH_ASSOC));
     $response->getBody()->write($payload);
-    return $response->withHeader('Content-Type', 'application/json');
+    return $response
+        ->withHeader('Access-Control-Allow-Origin', '*')
+        ->withHeader('Content-Type', 'application/json');
 });
 
 $app->run();
