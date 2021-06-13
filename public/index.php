@@ -11,10 +11,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
     exit;
 }
 
+//print errors
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
+//import classes
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Slim\Factory\AppFactory;
@@ -51,7 +53,7 @@ $app->get('/', function (Request $request, Response $response, $args) {
 //recreate db
 $app->post('/db', function (Request $request, Response $response, $args) {
     $result = "";
-    //delete
+    //delete db files
     if (file_exists(DBFILE)) {
         unlink(DBFILE);
     }
@@ -86,7 +88,7 @@ $app->delete('/db', function (Request $request, Response $response, $args) {
 
 //seed db
 $app->post('/dbseed', function (Request $request, Response $response, $args) {
-    //delete
+    //delete db
     if (file_exists(DBFILE)) {
         unlink(DBFILE);
     }
@@ -95,11 +97,14 @@ $app->post('/dbseed', function (Request $request, Response $response, $args) {
     $result = "";
     $pdo = (new SQLiteConnection())->connect(DBFILE);
 
+    //create tables
     $create_tables_sql = file_get_contents("sql/create_tables.sql");
     $pdo->exec($create_tables_sql);
 
+    //seed data
     $sql = file_get_contents("sql/insert_seed_data.sql");
     $pdo->exec($sql);
+
     $result = true;
     
     //output
@@ -114,6 +119,7 @@ $app->delete('/dbdata', function (Request $request, Response $response, $args) {
     $result = "";
     $pdo = (new SQLiteConnection())->connect(DBFILE);
 
+    //delete contents
     $pdo->exec("DELETE FROM item;");
     $pdo->exec("DELETE FROM category;");
     $result = true;
@@ -126,6 +132,7 @@ $app->delete('/dbdata', function (Request $request, Response $response, $args) {
 
 //get items
 $app->get('/items[/[{id}]]', function (Request $request, Response $response, $args) {
+    //get params if applicable and generate sql
     $params = array();
     if (isset($args['id'])) {
         $id = $args['id'];
@@ -135,10 +142,12 @@ $app->get('/items[/[{id}]]', function (Request $request, Response $response, $ar
         $sql = "SELECT * FROM item";
     }
     
+    //connect to db and run sql
     $pdo = (new SQLiteConnection())->connect(DBFILE);
     $stmt = $pdo->prepare($sql, array(PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY));
     $stmt->execute($params);
-   
+
+    //return array or single item accordingly if param supplied
     if (isset($args['id'])) {
         $payload = json_encode($stmt->fetch(\PDO::FETCH_ASSOC));
     } else {
@@ -151,6 +160,7 @@ $app->get('/items[/[{id}]]', function (Request $request, Response $response, $ar
 
 //post items
 $app->post('/items', function (Request $request, Response $response, $args) {
+    //get params
     $params = array();
     $json = $request->getBody();
     $data = json_decode($json, true);
@@ -159,9 +169,11 @@ $app->post('/items', function (Request $request, Response $response, $args) {
     $params[":weight"] = $data['weight'];
     $params[":category_id"] = $data['category_id'];
 
+    //sql
     $sql = "INSERT INTO item (description, weight, category_id) 
     VALUES (:description, :weight, :category_id);";
     
+    //connect and run sql
     $pdo = (new SQLiteConnection())->connect(DBFILE);
     $stmt = $pdo->prepare($sql, array(PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY));
     $stmt->execute($params);
@@ -175,6 +187,7 @@ $app->post('/items', function (Request $request, Response $response, $args) {
 
 //put items
 $app->put('/items/{id}', function (Request $request, Response $response, $args) {
+    //get params
     $params = array();
     $json = $request->getBody();
     $data = json_decode($json, true);
@@ -186,12 +199,14 @@ $app->put('/items/{id}', function (Request $request, Response $response, $args) 
     $params[":weight"] = $data['weight'];
     $params[":category_id"] = $data['category_id'];
 
+    //sql
     $sql = "UPDATE item 
     SET  description = :description,
         weight = :weight, 
         category_id = :category_id 
     WHERE id = :id;";
     
+    //connect and run sql
     $pdo = (new SQLiteConnection())->connect(DBFILE);
     $stmt = $pdo->prepare($sql, array(PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY));
     $stmt->execute($params);
@@ -204,11 +219,13 @@ $app->put('/items/{id}', function (Request $request, Response $response, $args) 
 
 //delete item
 $app->delete('/items/{id}', function (Request $request, Response $response, $args) {
+    //get paramts
     $params = array();
     $id = $args['id'];
     $params[":id"] = $id;
     $sql = "DELETE FROM item WHERE id = :id";
     
+    //connect and run sql
     $pdo = (new SQLiteConnection())->connect(DBFILE);
     $stmt = $pdo->prepare($sql, array(PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY));
     $stmt->execute($params);
@@ -221,6 +238,7 @@ $app->delete('/items/{id}', function (Request $request, Response $response, $arg
 
 //get categories
 $app->get('/categories[/[{id}]]', function (Request $request, Response $response, $args) {
+    //get params
     $params = array();
     if (isset($args['id'])) {
         $id = $args['id'];
@@ -230,10 +248,12 @@ $app->get('/categories[/[{id}]]', function (Request $request, Response $response
         $sql = "SELECT * FROM category";
     }
     
+    //connect and run sql
     $pdo = (new SQLiteConnection())->connect(DBFILE);
     $stmt = $pdo->prepare($sql, array(PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY));
     $stmt->execute($params);
    
+    //return array or single item accordingly
     if (isset($args['id'])) {
         $payload = json_encode($stmt->fetch(\PDO::FETCH_ASSOC));
     } else {
@@ -246,11 +266,13 @@ $app->get('/categories[/[{id}]]', function (Request $request, Response $response
 
 //delete category
 $app->delete('/categories/{id}', function (Request $request, Response $response, $args) {
+    //get params
     $params = array();
     $id = $args['id'];
     $params[":id"] = $id;
     $sql = "DELETE FROM category WHERE id = :id";
     
+    //connect and run sql
     $pdo = (new SQLiteConnection())->connect(DBFILE);
     $stmt = $pdo->prepare($sql, array(PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY));
     $stmt->execute($params);
@@ -263,6 +285,7 @@ $app->delete('/categories/{id}', function (Request $request, Response $response,
 
 //post category
 $app->post('/categories', function (Request $request, Response $response, $args) {
+    //get params
     $params = array();
     $json = $request->getBody();
     $data = json_decode($json, true);
@@ -273,6 +296,7 @@ $app->post('/categories', function (Request $request, Response $response, $args)
     $sql = "INSERT INTO category (name, priority) 
     VALUES (:name, :priority);";
     
+    //connect and run sql
     $pdo = (new SQLiteConnection())->connect(DBFILE);
     $stmt = $pdo->prepare($sql, array(PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY));
     $stmt->execute($params);
@@ -287,6 +311,7 @@ $app->post('/categories', function (Request $request, Response $response, $args)
 
 //put categories
 $app->put('/categories/{id}', function (Request $request, Response $response, $args) {
+    //get params
     $params = array();
     $json = $request->getBody();
     $data = json_decode($json, true);
@@ -302,6 +327,7 @@ $app->put('/categories/{id}', function (Request $request, Response $response, $a
         priority = :priority
     WHERE id = :id;";
     
+    //connect and run sql
     $pdo = (new SQLiteConnection())->connect(DBFILE);
     $stmt = $pdo->prepare($sql, array(PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY));
     $stmt->execute($params);
@@ -314,6 +340,7 @@ $app->put('/categories/{id}', function (Request $request, Response $response, $a
 
 //get stats
 $app->get('/stats', function (Request $request, Response $response, $args) {
+    //sql for stats
     $sql = "SELECT sum(weight) as sum_weight, c.name as category_name, c.id as category_id, priority
     FROM item i
     INNER JOIN category c ON i.category_id = c.id
@@ -321,6 +348,7 @@ $app->get('/stats', function (Request $request, Response $response, $args) {
     ORDER BY priority";
     $params = array();
     
+    //connect to db and run sql
     $pdo = (new SQLiteConnection())->connect(DBFILE);
     $stmt = $pdo->prepare($sql, array(PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY));
     $stmt->execute($params);
