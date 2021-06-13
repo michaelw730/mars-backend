@@ -11,8 +11,29 @@ use App\SQLiteConnection;
 
 require __DIR__ . '/../vendor/autoload.php';
 
-DEFINE('DBFILE', "db/phpsqlite.db");
+DEFINE('DBDIR', "db");
+DEFINE('DBFILE', DBDIR . "/phpsqlite.db");
 
+//get around CORS browser security issue
+header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Headers: Content-Type');
+header('Access-Control-Allow-Methods: GET, PUT, POST, DELETE, OPTIONS');
+
+//create db on initial startup
+if (empty($_REQUEST)) {
+    //make db folder
+    if (!file_exists(DBDIR)) {
+        mkdir(DBDIR);
+    }
+    //create db and tables
+    if (!file_exists(DBFILE)) {
+        $pdo = (new SQLiteConnection())->connect(DBFILE);
+        $create_tables_sql = file_get_contents("sql/create_tables.sql");
+        $pdo->exec($create_tables_sql);
+    }
+}
+
+//SLIM app and routing
 $app = AppFactory::create();
 
 //default
@@ -21,10 +42,15 @@ $app->get('/', function (Request $request, Response $response, $args) {
     return $response;
 });
 
-//create db
+//recreate db
 $app->post('/db', function (Request $request, Response $response, $args) {
-    //create db
     $result = "";
+    //delete
+    if (file_exists(DBFILE)) {
+        unlink(DBFILE);
+    }
+
+    //recreate db
     $pdo = (new SQLiteConnection())->connect(DBFILE);
     $create_tables_sql = file_get_contents("sql/create_tables.sql");
     $pdo->exec($create_tables_sql);
@@ -49,16 +75,22 @@ $app->delete('/db', function (Request $request, Response $response, $args) {
     //output
     $payload = json_encode(['result' => $result], JSON_PRETTY_PRINT);
     $response->getBody()->write($payload);
-    return $response
-        ->withHeader('Access-Control-Allow-Origin', '*')
-        ->withHeader('Content-Type', 'application/json');
+    return $response->withHeader('Content-Type', 'application/json');
 });
 
 //seed db
 $app->post('/dbseed', function (Request $request, Response $response, $args) {
+    //delete
+    if (file_exists(DBFILE)) {
+        unlink(DBFILE);
+    }
+
     //connect db
     $result = "";
     $pdo = (new SQLiteConnection())->connect(DBFILE);
+
+    $create_tables_sql = file_get_contents("sql/create_tables.sql");
+    $pdo->exec($create_tables_sql);
 
     $sql = file_get_contents("sql/insert_seed_data.sql");
     $pdo->exec($sql);
@@ -67,9 +99,23 @@ $app->post('/dbseed', function (Request $request, Response $response, $args) {
     //output
     $payload = json_encode(['result' => $result], JSON_PRETTY_PRINT);
     $response->getBody()->write($payload);
-    return $response
-        ->withHeader('Access-Control-Allow-Origin', '*')
-        ->withHeader('Content-Type', 'application/json');
+    return $response->withHeader('Content-Type', 'application/json');
+});
+
+//delete db data
+$app->delete('/dbdata', function (Request $request, Response $response, $args) {
+    //connect db
+    $result = "";
+    $pdo = (new SQLiteConnection())->connect(DBFILE);
+
+    $pdo->exec("DELETE FROM item;");
+    $pdo->exec("DELETE FROM category;");
+    $result = true;
+    
+    //output
+    $payload = json_encode(['result' => $result], JSON_PRETTY_PRINT);
+    $response->getBody()->write($payload);
+    return $response->withHeader('Content-Type', 'application/json');
 });
 
 //get items
@@ -89,9 +135,8 @@ $app->get('/items[/[{id}]]', function (Request $request, Response $response, $ar
    
     $payload = json_encode($stmt->fetchAll(\PDO::FETCH_ASSOC));
     $response->getBody()->write($payload);
-    return $response
-        ->withHeader('Access-Control-Allow-Origin', '*')
-        ->withHeader('Content-Type', 'application/json');
+
+    return $response->withHeader('Content-Type', 'application/json');
 });
 
 //post items
@@ -114,13 +159,12 @@ $app->post('/items', function (Request $request, Response $response, $args) {
    
     $payload = json_encode($id);
     $response->getBody()->write($payload);
-    return $response
-        ->withHeader('Access-Control-Allow-Origin', '*')
-        ->withHeader('Content-Type', 'application/json');
+
+    return $response->withHeader('Content-Type', 'application/json');
 });
 
-//patch items
-$app->patch('/items/{id}', function (Request $request, Response $response, $args) {
+//put items
+$app->put('/items/{id}', function (Request $request, Response $response, $args) {
     $params = array();
     $json = $request->getBody();
     $data = json_decode($json, true);
@@ -144,9 +188,8 @@ $app->patch('/items/{id}', function (Request $request, Response $response, $args
    
     $payload = json_encode(true);
     $response->getBody()->write($payload);
-    return $response
-        ->withHeader('Access-Control-Allow-Origin', '*')
-        ->withHeader('Content-Type', 'application/json');
+
+    return $response->withHeader('Content-Type', 'application/json');
 });
 
 //delete item
@@ -162,9 +205,8 @@ $app->delete('/items/{id}', function (Request $request, Response $response, $arg
    
     $payload = json_encode($stmt->fetchAll(\PDO::FETCH_ASSOC));
     $response->getBody()->write($payload);
-    return $response
-        ->withHeader('Access-Control-Allow-Origin', '*')
-        ->withHeader('Content-Type', 'application/json');
+
+    return $response->withHeader('Content-Type', 'application/json');
 });
 
 //get categories
@@ -188,9 +230,8 @@ $app->get('/categories[/[{id}]]', function (Request $request, Response $response
         $payload = json_encode($stmt->fetchAll(\PDO::FETCH_ASSOC));
     }
     $response->getBody()->write($payload);
-    return $response
-        ->withHeader('Access-Control-Allow-Origin', '*')
-        ->withHeader('Content-Type', 'application/json');
+    
+    return $response->withHeader('Content-Type', 'application/json');
 });
 
 //delete category
@@ -206,9 +247,8 @@ $app->delete('/categories/{id}', function (Request $request, Response $response,
    
     $payload = json_encode($stmt->fetchAll(\PDO::FETCH_ASSOC));
     $response->getBody()->write($payload);
-    return $response
-        ->withHeader('Access-Control-Allow-Origin', '*')
-        ->withHeader('Content-Type', 'application/json');
+    
+    return $response->withHeader('Content-Type', 'application/json');
 });
 
 //post category
@@ -231,13 +271,12 @@ $app->post('/categories', function (Request $request, Response $response, $args)
    
     $payload = json_encode($id);
     $response->getBody()->write($payload);
-    return $response
-        ->withHeader('Access-Control-Allow-Origin', '*')
-        ->withHeader('Content-Type', 'application/json');
+    
+    return $response->withHeader('Content-Type', 'application/json');
 });
 
-//patch categories
-$app->patch('/categories/{id}', function (Request $request, Response $response, $args) {
+//put categories
+$app->put('/categories/{id}', function (Request $request, Response $response, $args) {
     $params = array();
     $json = $request->getBody();
     $data = json_decode($json, true);
@@ -259,17 +298,17 @@ $app->patch('/categories/{id}', function (Request $request, Response $response, 
    
     $payload = json_encode(true);
     $response->getBody()->write($payload);
-    return $response
-        ->withHeader('Access-Control-Allow-Origin', '*')
-        ->withHeader('Content-Type', 'application/json');
+    
+    return $response->withHeader('Content-Type', 'application/json');
 });
 
 //get stats
 $app->get('/stats', function (Request $request, Response $response, $args) {
-    $sql = "SELECT sum(weight) as sum_weight, c.name as category_name, c.id as cateogry_id
+    $sql = "SELECT sum(weight) as sum_weight, c.name as category_name, c.id as category_id, priority
     FROM item i
     INNER JOIN category c ON i.category_id = c.id
-    GROUP BY category_id";
+    GROUP BY category_id, priority
+    ORDER BY priority";
     $params = array();
     
     $pdo = (new SQLiteConnection())->connect(DBFILE);
@@ -278,9 +317,8 @@ $app->get('/stats', function (Request $request, Response $response, $args) {
    
     $payload = json_encode($stmt->fetchAll(\PDO::FETCH_ASSOC));
     $response->getBody()->write($payload);
-    return $response
-        ->withHeader('Access-Control-Allow-Origin', '*')
-        ->withHeader('Content-Type', 'application/json');
+
+    return $response->withHeader('Content-Type', 'application/json');
 });
 
 $app->run();

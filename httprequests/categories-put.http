@@ -1,4 +1,4 @@
-PATCH http://localhost:8080/categories/16 HTTP/1.1
+PUT http://localhost:8080/categories/16 HTTP/1.1
 content-type: application/json
 
 {
