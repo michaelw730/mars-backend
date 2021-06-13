@@ -1,10 +1,9 @@
 FROM php:7.4-alpine
 
-COPY App /var/www/
-COPY public /var/www/
-COPY sql /var/www/
-COPY vendor /var/www/
-
+COPY App /var/www/App/
+COPY public /var/www/public
+COPY sql /var/www/sql/
+COPY vendor /var/www/vendor
 
 WORKDIR /var/www/
 EXPOSE 8080
