@@ -133,7 +133,11 @@ $app->get('/items[/[{id}]]', function (Request $request, Response $response, $ar
     $stmt = $pdo->prepare($sql, array(PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY));
     $stmt->execute($params);
    
-    $payload = json_encode($stmt->fetchAll(\PDO::FETCH_ASSOC));
+    if (isset($args['id'])) {
+        $payload = json_encode($stmt->fetch(\PDO::FETCH_ASSOC));
+    } else {
+        $payload = json_encode($stmt->fetchAll(\PDO::FETCH_ASSOC));
+    }
     $response->getBody()->write($payload);
 
     return $response->withHeader('Content-Type', 'application/json');
