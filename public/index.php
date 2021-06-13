@@ -1,5 +1,16 @@
 <?php
 
+//get around CORS browser security issue
+header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Headers: Content-Type');
+header('Access-Control-Allow-Methods: GET, PUT, POST, DELETE, OPTIONS');
+
+//work arount to pre-flight options requests
+if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
+    header("HTTP/1.1 200 ");
+    exit;
+}
+
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
@@ -13,11 +24,6 @@ require __DIR__ . '/../vendor/autoload.php';
 
 DEFINE('DBDIR', "db");
 DEFINE('DBFILE', DBDIR . "/phpsqlite.db");
-
-//get around CORS browser security issue
-header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Headers: Content-Type');
-header('Access-Control-Allow-Methods: GET, PUT, POST, DELETE, OPTIONS');
 
 //create db on initial startup
 if (empty($_REQUEST)) {
@@ -325,4 +331,8 @@ $app->get('/stats', function (Request $request, Response $response, $args) {
     return $response->withHeader('Content-Type', 'application/json');
 });
 
+//echo requests (for debugging rest calls)
+error_log($_SERVER['REQUEST_METHOD'] ."|".$_SERVER['REQUEST_URI']);
+
+//run app
 $app->run();
